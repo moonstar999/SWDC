@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Interface with Voice Recognition</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header div {
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #666;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div id="date"></div>
+    <div id="time"></div>
+  </header>
+
+  <button id="start-btn">🎤 Start Listening</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>✔</th>
+        <th>Bill No</th>
+        <th>Status</th>
+        <th>Item</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <!-- Rows will be appended here -->
+    </tbody>
+  </table>
+
+  <script>
+    // --- 1. Date & Time ---
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('date').textContent = now.toLocaleDateString();
+      document.getElementById('time').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // --- 2. Voice Recognition Setup ---
+    const startBtn = document.getElementById('start-btn');
+    const ordersBody = document.getElementById('orders-body');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Your browser does not support Speech Recognition API');
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';        // آپ چاہیں تو 'ur-PK' بھی آزما سکتے ہیں
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      startBtn.addEventListener('click', () => {
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript.toLowerCase();
+        processVoiceCommand(text);
+      };
+      recognition.onerror = (e) => {
+        console.error('Recognition error:', e.error);
+      };
+    }
+
+    // --- 3. Voice Command Parsing & Table Update ---
+    function processVoiceCommand(cmd) {
+      // مثال: "bill one delivery, item burger quantity two"
+      // Steps:
+      // 1. split by commas
+      // 2. extract bill no, status, item, quantity
+      const parts = cmd.split(',');
+      let billNo = '', status = '', item = '', qty = '';
+      parts.forEach(part => {
+        part = part.trim();
+        if (part.startsWith('bill ')) {
+          // "bill one delivery"
+          const m = part.match(/bill (\w+) (\w+)/);
+          if (m) {
+            billNo = m[1];
+            status = m[2];
+          }
+        }
+        if (part.startsWith('item ')) {
+          // "item burger quantity two"
+          const m = part.match(/item ([\w\s]+) quantity (\w+)/);
+          if (m) {
+            item = m[1];
+            qty  = m[2];
+          }
+        }
+      });
+
+      if (billNo && item) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox"></td>
+          <td>${billNo}</td>
+          <td>${status || ''}</td>
+          <td>${item}</td>
+          <td>${qty || ''}</td>
+        `;
+        ordersBody.appendChild(row);
+      } else {
+        alert('Command not recognized. Please say: "bill X status, item Y quantity Z"');
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Voice Order System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    #output, #instructions {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #aaa;
+      background: #f9f9f9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div id="date"></div>
+    <div id="time"></div>
+  </header>
+
+  <button id="start-btn">🎤 Start Listening</button>
+
+  <div id="instructions">
+    🔊 <strong>بولنے کا طریقہ:</strong><br>
+    <code>
+      A system 12 delivery two burger<br>
+      A system 15 pending دو زنگر<br>
+    </code>
+    <br>
+    ✅ Recognizes both English and Urdu numbers like "two" or "دو"
+  </div>
+
+  <div id="output">🗣 <em>Your voice command will appear here...</em></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>✔</th>
+        <th>Bill No</th>
+        <th>Status</th>
+        <th>Quantity</th>
+        <th>Item</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <!-- Rows will be added here -->
+    </tbody>
+  </table>
+
+  <script>
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('date').textContent = 'Date: ' + now.toLocaleDateString();
+      document.getElementById('time').textContent = 'Time: ' + now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    const output = document.getElementById('output');
+    const ordersBody = document.getElementById('orders-body');
+    const startBtn = document.getElementById('start-btn');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Speech Recognition.");
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';  // اردو اور انگریزی دونوں کی سپورٹ
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      startBtn.addEventListener('click', () => {
+        recognition.start();
+        output.textContent = "🎤 Listening... speak your command now!";
+      });
+
+      recognition.onresult = (event) => {
+        const speech = event.results[0][0].transcript.toLowerCase();
+        output.textContent = `🗣 You said: "${speech}"`;
+        processCommand(speech);
+      };
+
+      recognition.onerror = (event) => {
+        output.textContent = `❌ Error: ${event.error}`;
+      };
+    }
+
+    function processCommand(text) {
+      if (!text.startsWith("a")) {
+        output.textContent += "\n⚠️ Please start command with 'A system'";
+        return;
+      }
+
+      // Example: "a system 12 delivery two burger" OR "a system 15 delivery دو زنگر"
+      const words = text.split(" ");
+
+      // Check minimum words length
+      if (words.length < 5) {
+        output.textContent += "\n❗ Incomplete command.";
+        return;
+      }
+
+      // Extracting data
+      let billNo = words[2];
+      let status = words[3];
+      let quantity = words[4];
+      let item = words.slice(5).join(" ");
+
+      // Handle Urdu numbers like "دو"
+      const urduToEnglishNumbers = {
+        'دو': '2',
+        'تین': '3',
+        'چار': '4',
+        'پانچ': '5',
+        'چھ': '6',
+        'سات': '7',
+        'آٹھ': '8',
+        'نو': '9',
+        'دس': '10'
+      };
+      if (urduToEnglishNumbers[quantity]) {
+        quantity = urduToEnglishNumbers[quantity];
+      }
+
+      if (billNo && status && quantity && item) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox"></td>
+          <td>${billNo}</td>
+          <td>${status}</td>
+          <td>${quantity}</td>
+          <td>${item}</td>
+        `;
+        ordersBody.appendChild(row);
+        output.textContent += "\n✅ Order added successfully.";
+      } else {
+        output.textContent += "\n❗ Command format not recognized properly.";
+      }
+    }
+  </script>
+
+</body>
+</html>

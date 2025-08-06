@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Order Manager</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+    }
+    #output, #instructions {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid #aaa;
+      background: #f7f7f7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #666;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #ddd;
+    }
+    .checked {
+      background-color: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div id="date"></div>
+    <div id="time"></div>
+  </header>
+
+  <div id="instructions">
+    🎤 <strong>Just Speak:</strong><br>
+    <code>
+      A system 12 delivery two burger and three fries<br>
+      A system 15 pending دو زنگر اور ایک پزا
+    </code><br>
+    ✅ Recognizes Urdu & English numbers<br>
+    ✅ Tick to mark order as "OK"
+  </div>
+
+  <div id="output">🗣 Waiting for command...</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>✔</th>
+        <th>Bill No</th>
+        <th>Status</th>
+        <th>Quantity</th>
+        <th>Item</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <!-- Order rows here -->
+    </tbody>
+  </table>
+
+  <script>
+    // Date and Time updater
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('date').textContent = 'Date: ' + now.toLocaleDateString();
+      document.getElementById('time').textContent = 'Time: ' + now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Voice recognition setup
+    const output = document.getElementById('output');
+    const ordersBody = document.getElementById('orders-body');
+
+    const urduToEnglish = {
+      'دو': '2', 'تین': '3', 'چار': '4', 'پانچ': '5',
+      'چھ': '6', 'سات': '7', 'آٹھ': '8', 'نو': '9', 'دس': '10',
+      'ایک': '1'
+    };
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US'; // اردو بھی recognize کرے گا اکثر
+    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const speech = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      output.textContent = `🗣 You said: "${speech}"`;
+      speakResponse("اوئے! تم نے آرڈر دیا۔ لگا رہا ہوں...");
+      processCommand(speech);
+    };
+
+    recognition.onerror = (event) => {
+      output.textContent = `❌ Error: ${event.error}`;
+    };
+
+    function speakResponse(text) {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = 'ur-PK'; // اردو رسپانس
+      window.speechSynthesis.speak(msg);
+    }
+
+    function processCommand(text) {
+      if (!text.startsWith('a')) return;
+
+      try {
+        const words = text.split(" ");
+        const billNo = words[2];
+        const status = words[3];
+
+        // Urdu number conversion
+        Object.keys(urduToEnglish).forEach(urdu => {
+          const eng = urduToEnglish[urdu];
+          text = text.replace(new RegExp(`\\b${urdu}\\b`, 'g'), eng);
+        });
+
+        const itemMatches = [...text.matchAll(/(\d+)\s([a-zA-Zآ-ی]+)/g)];
+        itemMatches.forEach((match, i) => {
+          const qty = match[1];
+          const item = match[2];
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="checkbox" onchange="markDone(this)"></td>
+            <td>${billNo}</td>
+            <td>${status}</td>
+            <td>${qty}</td>
+            <td>${item}</td>
+          `;
+          ordersBody.appendChild(row);
+        });
+
+      } catch (err) {
+        output.textContent += "\n⚠️ Command could not be processed.";
+      }
+    }
+
+    window.markDone = function (checkbox) {
+      const row = checkbox.closest('tr');
+      if (checkbox.checked) {
+        row.classList.add('checked');
+        speakResponse("اوکے! آرڈر مکمل ہو گیا");
+      } else {
+        row.classList.remove('checked');
+      }
+    }
+  </script>
+
+</body>
+</html>

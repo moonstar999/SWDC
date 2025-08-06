@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>quiz</title>
+    <style>
+        :root{
+            --color: blue;
+            --seccolor: rgb(105, 105, 222);
+        }
+        
+        *{
+            margin: 0;padding: 0;
+        }
+        .nav ul{
+            display: flex;
+            background-color: var(--color);
+
+        }
+        .nav ul li {
+            padding-left: 13px;
+            border: 3px solid var(--seccolor);
+        }
+        .nav ul li a {
+            font-size: larger;
+            color: black;
+            text-decoration: none;
+        }
+
+        @media screen and (max-width: 632px){
+            .nav ul{
+            display: block;
+            background-color: var(--seccolor);
+
+        }
+        .nav ul li {
+            padding-left: 13px;
+            border: 3px solid var(--color);
+        }
+        .nav ul li a {
+            font-size: larger;
+            color: black;
+            text-decoration: none;
+        }
+        }
+        
+        @media screen and (max-width: 455px){
+            .nav ul{
+            display: block;
+            background-color: hotpink;
+
+        }
+        .nav ul li {
+            padding-left: 13px;
+            border: 3px solid red;
+        }
+        .nav ul li a {
+            font-size: larger;
+            color: rgb(31, 61, 30);
+            text-decoration: none;
+        }
+        }
+    </style>
+</head>
+<body>
+    <DIV class="nav">
+        <ul type="none">
+            <li> <a href="www.google.com">Home</a></li>
+            <li> <a href="www.youtube.com">About</a></li>
+            <li> <a href="www.github.com">Contact</a></li>
+        </ul>
+    </DIV>
+</body>
+</html>
